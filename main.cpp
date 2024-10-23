@@ -2,6 +2,7 @@
 #include <cstdlib> // dla rand() i srand()
 #include <ctime>   // dla time()
 #include <climits> // dla INT_MAX
+#include <fstream> // Dla operacji na plikach
 #include <chrono>  // dla pomiaru czasu
 
 using namespace std;
@@ -168,8 +169,81 @@ void dlaLosowychInstancji()
     }
 }
 
+// Funkcja do wczytywania grafu z pliku
+int **wczytajGrafZPliku(const string &nazwaPliku, int &n)
+{
+    ifstream plik(nazwaPliku, ios::in);
+
+    if (!plik.is_open())
+    {
+        cerr << "Blad: Nie udalo sie otworzyc pliku " << nazwaPliku << endl;
+        return nullptr;
+    }
+
+    // Odczyt liczby wierzchołków
+    plik >> n;
+
+    // Alokacja pamięci dla macierzy sąsiedztwa
+    int **graf = new int *[n];
+    for (int i = 0; i < n; i++)
+    {
+        graf[i] = new int[n];
+    }
+
+    // Wczytywanie macierzy sąsiedztwa z pliku
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            plik >> graf[i][j];
+        }
+    }
+
+    plik.close();
+    return graf;
+}
+
+// Funkcja do testowania algorytmu dla grafu wczytanego z pliku
+void dlaGrafuZPliku()
+{
+    graf = wczytajGrafZPliku("graf.txt", n);
+
+    if (graf == nullptr)
+    {
+        return;
+    }
+
+    dp = new int **[n];
+    for (int i = 0; i < n; i++)
+    {
+        dp[i] = new int *[n];
+        for (int j = 0; j < n; j++)
+        {
+            dp[i][j] = new int[n + 1];
+            for (int k = 0; k <= n; k++)
+            {
+                dp[i][j][k] = -1; // Inicjalizacja wartości dp jako nieobliczonych
+            }
+        }
+    }
+
+    int *odwiedzone = new int[n](); // Alokujemy tablicę i inicjalizujemy ją zerami
+    odwiedzone[0] = 1;              // Zaczynamy od wierzchołka 0, więc jest odwiedzony
+
+    // Uruchamiamy algorytm dla wierzchołka początkowego 0
+    int wynik = tsp(odwiedzone, 0, 1); // Startujemy od wierzchołka 0 z jednym odwiedzonym wierzchołkiem
+
+    cout << "Minimalny koszt dla grafu z pliku: " << wynik << endl;
+
+    // Zwalnianie dynamicznie zaalokowanej pamięci
+    zwolnijPamiec(graf, dp, odwiedzone, n);
+}
+
 int main()
 {
-    dlaLosowychInstancji();
+    // Możesz wywołać jedną z poniższych funkcji w zależności od potrzeb:
+    // dlaLosowychInstancji();
+    dlaGrafuZPliku();
+
     return 0;
 }
