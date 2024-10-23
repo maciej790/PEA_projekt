@@ -241,9 +241,34 @@ void dlaGrafuZPliku()
 
 int main()
 {
-    // Możesz wywołać jedną z poniższych funkcji w zależności od potrzeb:
-    // dlaLosowychInstancji();
-    dlaGrafuZPliku();
+
+    int wybor;
+    while (wybor != 3)
+    {
+        cout << "1. Pomiar srednich czasow dla losowych instancji" << endl;
+        cout << "2. Wczytanie grafu z pliku i sprawdzenie poprawnosci programu" << endl;
+        cout << "3. Wyjscie" << endl;
+
+        cin >> wybor;
+
+        switch (wybor)
+        {
+        case 1:
+            dlaLosowychInstancji();
+            break;
+
+        case 2:
+            dlaGrafuZPliku();
+            break;
+
+        case 3:
+            return 0;
+            break;
+
+        default:
+            break;
+        }
+    }
 
     return 0;
 }
