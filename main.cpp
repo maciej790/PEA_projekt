@@ -1,85 +1,86 @@
-#include "Graph.h"
-#include <chrono>
+// main.cpp
+#include <iostream>
+#include "tsp.h"
+#include "random_graph.h"
+#include <iostream>
+#include <cstdlib> // dla rand() i srand()
+#include <ctime>   // dla time()
 
-void menu() {
-    std::cout << "Menu:\n";
-    std::cout << "1. Wczytaj z pliku\n";
-    std::cout << "2. Wygeneruj graf losowo\n";
-    std::cout << "3. Wyświetl graf (macierzowo/listowo)\n";
-    std::cout << "4. Algorytm Dijkstry (macierzowo/listowo)\n";
-    std::cout << "5. Wyjdź\n";
-}
+using namespace std;
 
 int main() {
-    Graph graph(0);
-    int choice;
+    srand(time(0));
+    
+    int rozmiary[5] = {50, 100, 200, 500, 1000};
 
-    do {
-        menu();
-        std::cout << "Wybierz opcję: ";
-        std::cin >> choice;
-
-        switch (choice) {
-            case 1: {
-                std::string filename;
-                std::cout << "Podaj nazwę pliku: ";
-                std::cin >> filename;
-                graph.loadFromFile(filename);
-                break;
-            }
-            case 2: {
-                int vertices, density;
-                std::cout << "Podaj liczbę wierzchołków: ";
-                std::cin >> vertices;
-                std::cout << "Podaj gęstość grafu (w %): ";
-                std::cin >> density;
-                graph.generateRandomGraph(vertices, density);
-                break;
-            }
-            case 3: {
-                std::cout << "Wybierz reprezentację (1 - macierzowa, 2 - listowa): ";
-                int repChoice;
-                std::cin >> repChoice;
-                if (repChoice == 1) {
-                    graph.displayMatrix();
-                } else {
-                    graph.displayList();
+    for(int i = 0; i < 5; i++){
+        for(int j = 0; j < 9; j++){
+                // Losowanie grafu
+                n = rozmiary[i];
+                graf = losujGraf(n);
+                //cout << "Wygenerowany graf (" << n << "x" << n << "): " << endl;
+                // for (int i = 0; i < n; i++) {
+                //     for (int j = 0; j < n; j++) {
+                //         cout << graf[i][j] << " ";
+                //     }
+                //     cout << endl;
+                // }
+                // Reszta kodu (alokacja dp, itp.)
+                dp = new int**[n];
+                for (int i = 0; i < n; i++) {
+                    dp[i] = new int*[n];
+                    for (int j = 0; j < n; j++) {
+                        dp[i][j] = new int[n + 1];
+                        for (int k = 0; k <= n; k++) {
+                            dp[i][j][k] = -1; // Inicjalizacja wartości dp jako nieobliczonych
+                        }
+                    }
                 }
-                break;
-            }
-            case 4: {
-                int start, end;
-                std::cout << "Podaj wierzchołek początkowy: ";
-                std::cin >> start;
-                std::cout << "Podaj wierzchołek końcowy: ";
-                std::cin >> end;
 
-                std::cout << "Wybierz reprezentację (1 - macierzowa, 2 - listowa): ";
-                int repChoice;
-                std::cin >> repChoice;
+                // Dynamiczna alokacja dla tablicy odwiedzone
+                int* odwiedzone = new int[n](); // Alokujemy tablicę i inicjalizujemy ją zerami
+                odwiedzone[0] = 1; // Zaczynamy od wierzchołka 0, więc jest odwiedzony
+                cout << "TSP dla grafu o rozmiarze " << n << ": " << endl;
+                // Pomiar czasu rozpoczęcia algorytmu
+                auto start = high_resolution_clock::now();
 
-                if (repChoice == 1) {
-                    auto start_time = std::chrono::high_resolution_clock::now();
-                    graph.dijkstraMatrix(start, end);
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> elapsed = end_time - start_time;
-                    std::cout << "Czas wykonania (macierzowa): " << elapsed.count() << " sekund\n";
+                // Uruchamiamy algorytm dla wierzchołka początkowego 0
+                int wynik = tsp(odwiedzone, 0, 1); // Startujemy od wierzchołka 0 z jednym odwiedzonym wierzchołkiem
+
+                // Pomiar czasu zakończenia algorytmu
+                auto stop = high_resolution_clock::now();
+
+                // Obliczenie czasu wykonania algorytmu
+                auto duration = duration_cast<milliseconds>(stop - start);
+
+                // Wyświetlamy wynik
+                if (wynik == INT_MAX) {
+                    cout << "    Nie ma mozliwej trasy obejmujacej wszystkie wierzcholki." << endl;
                 } else {
-                    auto start_time = std::chrono::high_resolution_clock::now();
-                    graph.dijkstraList(start, end);
-                    auto end_time = std::chrono::high_resolution_clock::now();
-                    std::chrono::duration<double> elapsed = end_time - start_time;
-                    std::cout << "Czas wykonania (listowa): " << elapsed.count() << " sekund\n";
+                    cout << "    Minimalny koszt trasy: " << wynik << endl;
                 }
-                break;
-            }
-            case 5:
-                std::cout << "Zamykanie programu.\n";
-                break;
-            default:
-                std::cout << "Nieprawidłowa opcja. Spróbuj ponownie.\n";
+
+                // Wyświetlenie czasu wykonania algorytmu
+                cout << "Czas wykonania algorytmu: " << duration.count() << " ms" << endl;
+
+                // Zwalnianie dynamicznie zaalokowanej pamięci
+                for (int i = 0; i < n; i++) {
+                    delete[] graf[i];
+                }
+                delete[] graf;
+
+                for (int i = 0; i < n; i++) {
+                    for (int j = 0; j < n; j++) {
+                        delete[] dp[i][j];
+                    }
+                    delete[] dp[i];
+                }
+                delete[] dp;
+
+                delete[] odwiedzone; // Zwolnienie tablicy odwiedzone
         }
-    } while (choice != 5);
+    }
+    
 
     return 0;
 }
