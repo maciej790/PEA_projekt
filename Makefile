@@ -1,35 +1,24 @@
-# Makefile do kompilacji programu generującego nieskierowany graf
+# Nazwa pliku wykonywalnego
+TARGET = run
 
 # Kompilator
 CXX = g++
+CXXFLAGS = -std=c++11 -Wall
 
-# Flagi kompilacji
-CXXFLAGS = -Wall -Wextra -std=c++11
+# Nazwa pliku źródłowego
+SRCS = main.cpp
 
-# Nazwa docelowego pliku wykonywalnego
-TARGET = random_graph
-
-# Pliki źródłowe
-SRCS = main.cpp random_graph.cpp tsp.cpp
-
-# Pliki obiektowe
-OBJS = $(SRCS:.cpp=.o)
-
-# Reguła domyślna (kompilacja)
+# Domyślny cel: kompilacja
 all: $(TARGET)
 
-# Reguła do budowania pliku wykonywalnego
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+# Kompilacja programu
+$(TARGET): $(SRCS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(SRCS)
 
-# Reguła do budowania plików obiektowych
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $<
-
-# Reguła do czyszczenia (usuwania plików obiektowych i wykonywalnych)
+# Usuwanie pliku wykonywalnego
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(TARGET)
 
-# Reguła do uruchamiania programu
-run: $(TARGET)
-	./$(TARGET)
+# Usuwanie pliku wykonywalnego i wszystkich plików tymczasowych
+cleanall: clean
+	rm -f *.o

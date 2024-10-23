@@ -1,16 +1,121 @@
-// main.cpp
-#include <iostream>
-#include "tsp.h"
-#include "random_graph.h"
 #include <iostream>
 #include <cstdlib> // dla rand() i srand()
 #include <ctime>   // dla time()
+#include <climits> // dla INT_MAX
+#include <chrono>  // dla pomiaru czasu
 
 using namespace std;
+using namespace std::chrono;
 
-int main()
+// Zmienne globalne
+int **graf; // Macierz sąsiedztwa grafu
+int ***dp;  // Tablica dynamiczna dp
+int n;      // Liczba wierzchołków
+
+// Funkcja pomocnicza do znajdowania minimalnej wartości
+int min(int a, int b)
 {
+    return (a < b) ? a : b;
+}
 
+// Funkcja rekurencyjna TSP
+int tsp(int odwiedzone[], int pozycja, int liczbaOdwiedzonych)
+{
+    // Jeśli odwiedziliśmy wszystkie wierzchołki, wracamy do początkowego wierzchołka 0
+    if (liczbaOdwiedzonych == n)
+    {
+        return graf[pozycja][0] > 0 ? graf[pozycja][0] : INT_MAX;
+    }
+
+    // Sprawdzamy, czy wynik został już obliczony
+    if (dp[pozycja][0][liczbaOdwiedzonych] != -1)
+    {
+        return dp[pozycja][0][liczbaOdwiedzonych];
+    }
+
+    int minCost = INT_MAX;
+
+    // Próbujemy przejść do każdego wierzchołka, który nie został jeszcze odwiedzony
+    for (int next = 0; next < n; next++)
+    {
+        if (!odwiedzone[next] && graf[pozycja][next] > 0)
+        {
+            odwiedzone[next] = 1;                                         // Zaznaczamy wierzchołek next jako odwiedzony
+            int tempCost = tsp(odwiedzone, next, liczbaOdwiedzonych + 1); // Rekurencyjne wywołanie TSP
+            if (tempCost != INT_MAX)
+            {
+                minCost = min(minCost, graf[pozycja][next] + tempCost); // Minimalizujemy koszt
+            }
+            odwiedzone[next] = 0; // Cofamy zaznaczenie
+        }
+    }
+
+    // Zapisujemy wynik do tablicy dp
+    dp[pozycja][0][liczbaOdwiedzonych] = minCost;
+
+    return minCost;
+}
+
+// Funkcja do losowania grafu
+int **losujGraf(int n)
+{
+    // Alokacja pamięci dla macierzy sąsiedztwa
+    int **graf = new int *[n];
+    for (int i = 0; i < n; i++)
+    {
+        graf[i] = new int[n];
+    }
+
+    // Inicjalizacja macierzy sąsiedztwa
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            if (i == j)
+            {
+                graf[i][j] = 0; // Koszt przejścia do samego siebie = 0
+            }
+            else
+            {
+                // Losowanie krawędzi, każda krawędź zawsze istnieje
+                int waga = rand() % 99 + 1; // Losowa waga od 1 do 99
+                graf[i][j] = waga;
+                graf[j][i] = waga; // Ustawienie krawędzi w drugą stronę, aby graf był nieskierowany
+            }
+        }
+    }
+
+    return graf;
+}
+
+// Funkcja do zwalniania pamięci dla grafu, dp i odwiedzonych
+void zwolnijPamiec(int **graf, int ***dp, int *odwiedzone, int n)
+{
+    // Zwalnianie pamięci dla grafu
+    for (int i = 0; i < n; i++)
+    {
+        delete[] graf[i];
+    }
+    delete[] graf;
+
+    // Zwalnianie pamięci dla dp
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            delete[] dp[i][j];
+        }
+        delete[] dp[i];
+    }
+    delete[] dp;
+
+    // Zwalnianie pamięci dla odwiedzonych
+    delete[] odwiedzone;
+}
+
+// Funkcja do testowania algorytmu dla losowych instancji grafów
+void dlaLosowychInstancji()
+{
     srand(time(0));
 
     int rozmiary[5] = {50, 100, 200, 500, 600};
@@ -41,8 +146,8 @@ int main()
             // Dynamiczna alokacja dla tablicy odwiedzone
             int *odwiedzone = new int[n](); // Alokujemy tablicę i inicjalizujemy ją zerami
             odwiedzone[0] = 1;              // Zaczynamy od wierzchołka 0, więc jest odwiedzony
-            // cout << "TSP dla grafu o rozmiarze " << n << ": " << endl;
-            //  Pomiar czasu rozpoczęcia algorytmu
+
+            // Pomiar czasu rozpoczęcia algorytmu
             auto start = high_resolution_clock::now();
 
             // Uruchamiamy algorytm dla wierzchołka początkowego 0
@@ -55,41 +160,16 @@ int main()
             auto duration = duration_cast<milliseconds>(stop - start);
             czasCalkowity = czasCalkowity + duration.count();
 
-            // Wyświetlamy wynik
-            // if (wynik == INT_MAX)
-            // {
-            //     cout << "    Nie ma mozliwej trasy obejmujacej wszystkie wierzcholki." << endl;
-            // }
-            // else
-            // {
-            //     cout << "    Minimalny koszt trasy: " << wynik << endl;
-            // }
-
-            // Wyświetlenie czasu wykonania algorytmu
-            // cout << "Czas wykonania algorytmu: " << duration.count() << " ms" << endl;
-
             // Zwalnianie dynamicznie zaalokowanej pamięci
-            for (int i = 0; i < n; i++)
-            {
-                delete[] graf[i];
-            }
-            delete[] graf;
-
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    delete[] dp[i][j];
-                }
-                delete[] dp[i];
-            }
-            delete[] dp;
-
-            delete[] odwiedzone; // Zwolnienie tablicy odwiedzone
+            zwolnijPamiec(graf, dp, odwiedzone, n);
         }
 
         cout << "Czas średni dla n: " << n << " to: " << czasCalkowity / 10 << " ms" << endl;
     }
+}
 
+int main()
+{
+    dlaLosowychInstancji();
     return 0;
 }
